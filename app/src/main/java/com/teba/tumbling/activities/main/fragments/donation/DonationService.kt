@@ -1,23 +1,23 @@
-package com.teba.tumbling.activities.main.fragments.map
+package com.teba.tumbling.activities.main.fragments.donation
 
 import com.teba.tumbling.Api
-import com.teba.tumbling.activities.main.fragments.map.interfaces.MapRetrofit
-import com.teba.tumbling.activities.main.fragments.map.models.StoreDetailResponse
-import com.teba.tumbling.activities.main.fragments.map.models.StoreResponse
+import com.teba.tumbling.activities.main.fragments.donation.interfaces.DonationRetrofit
+import com.teba.tumbling.activities.main.fragments.donation.models.StoreResponse
+import com.teba.tumbling.activities.main.fragments.donation.models.StoreDetailResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class MapService() {
+class DonationService {
 
-    fun getStores(
+    fun getDonationStores(
         lat: Double,
         lng: Double,
-        onSuccess: (response: StoreResponse) -> Unit,
-        onFailure: (message: String) -> Unit
+        onSuccess:(response: StoreResponse )->Unit,
+        onFailure:(message: String)->Unit
     ) {
-        Api.retrofit2.create(MapRetrofit::class.java)
-            .getStores(lat.toString(), lng.toString(), 10)
+        Api.retrofit2.create(DonationRetrofit::class.java)
+            .getDonationStores(lat, lng)
             .enqueue(object : Callback<StoreResponse> {
                 override fun onResponse(
                     call: Call<StoreResponse>,
@@ -31,7 +31,6 @@ class MapService() {
                         }
                         onFailure("EMPTY BODY")
                     }
-
                 }
 
                 override fun onFailure(call: Call<StoreResponse>, t: Throwable) {
@@ -41,12 +40,13 @@ class MapService() {
             })
     }
 
+
     fun getStoreDetail(
         idx: Int,
         onSuccess: (response: StoreDetailResponse) -> Unit,
         onFailure: (message: String) -> Unit
     ) {
-        Api.retrofit2.create(MapRetrofit::class.java)
+        Api.retrofit2.create(DonationRetrofit::class.java)
             .getStoreDetail(idx)
             .enqueue(object : Callback<StoreDetailResponse> {
                 override fun onResponse(
@@ -70,5 +70,6 @@ class MapService() {
 
             })
     }
+
 
 }

@@ -18,11 +18,12 @@ open class BaseFragment(val layoutId: Int): Fragment(), FragmentInterface {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        initView()
-        return inflater.inflate(layoutId, container, false)
+        val view =  inflater.inflate(layoutId, container, false)
+        initView(view)
+        return view
     }
 
-    override fun initView() {}
+    override fun initView(view: View) {}
 
     fun printLog(message: String?) {
         Log.d(Constants.APP_NAME, "---> ${message?: "NO MESSAGE"}")
@@ -40,5 +41,5 @@ open class BaseFragment(val layoutId: Int): Fragment(), FragmentInterface {
 }
 
 interface FragmentInterface {
-    fun initView()
+    fun initView(view: View)
 }

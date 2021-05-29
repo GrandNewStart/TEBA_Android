@@ -13,6 +13,7 @@ import com.teba.tumbling.Constants.APP_NAME
 import com.teba.tumbling.GlobalApplication.Companion.sharedPreferences
 import com.teba.tumbling.R
 import com.teba.tumbling.activities.login.interfaces.LogInRetrofit
+import com.teba.tumbling.activities.main.MainActivity
 import com.teba.tumbling.activities.splash.SplashActivity
 import com.teba.tumbling.customs.BaseActivity
 
@@ -46,7 +47,7 @@ class LogInActivity: BaseActivity(R.layout.activity_log_in) {
                             putString(Constants.TOKEN, response.jwt)
                             apply()
                         }
-                        Intent(this, SplashActivity::class.java).apply {
+                        Intent(this, MainActivity::class.java).apply {
                             startActivity(this)
                             finish()
                         }

@@ -6,25 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ImageView
-import android.widget.ListView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.LocationTrackingMode
-import com.naver.maps.map.MapView
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.OnMapReadyCallback
-import com.naver.maps.map.overlay.InfoWindow
+import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import com.teba.tumbling.Constants
 import com.teba.tumbling.R
 import com.teba.tumbling.activities.main.MainActivity
-import com.teba.tumbling.activities.main.fragments.map.dialogs.TrendingDialog
+import com.teba.tumbling.activities.main.fragments.map.dialogs.StoreInfoDialog
 import com.teba.tumbling.activities.main.fragments.map.models.Store
 import com.teba.tumbling.customs.BaseFragment
 
@@ -41,6 +33,10 @@ class MapFragment(val activity: MainActivity): BaseFragment(R.layout.fragment_ma
     private lateinit var map: NaverMap
     private val service = MapService()
     private var stores = ArrayList<Store>()
+    private var markers = ArrayList<Marker>()
+    private lateinit var selectedStore: Store
+    private var currentPos = LatLng(0.0,0.0)
+    private var camMoving = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -60,20 +56,38 @@ class MapFragment(val activity: MainActivity): BaseFragment(R.layout.fragment_ma
         points = view.findViewById(R.id.points)
         image = view.findViewById(R.id.image)
 
-        initLocationSource()
-        mapView.getMapAsync {
-            map = it
-            map.locationSource = locationSource
-            map.uiSettings.isLocationButtonEnabled = true
-            map.addOnLocationChangeListener { location ->
-                tryGetStores(location.latitude, location.longitude)
-            }
+        bottom.visibility = View.GONE
+        bottom.setOnClickListener {
+            tryGetStoreDetail(selectedStore)
         }
+
+        initLocationSource()
+        initNaverMap()
         mapView.onCreate(savedInstanceState)
     }
 
     fun initLocationSource() {
         locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
+    }
+
+    fun initNaverMap() {
+        mapView.getMapAsync {
+            map = it
+            map.locationSource = locationSource
+            map.uiSettings.isLocationButtonEnabled = true
+            map.addOnLocationChangeListener { location ->
+                camMoving = true
+            }
+            map.addOnCameraIdleListener {
+                if (camMoving) {
+                    val pos = map.contentBounds.center
+                    tryGetStores(pos.latitude, pos.longitude)
+                    currentPos = LatLng(pos.latitude, pos.longitude)
+                    activity.currentPos = currentPos
+                }
+                camMoving = false
+            }
+        }
     }
 
     override fun onMapReady(p0: NaverMap) {
@@ -101,16 +115,38 @@ class MapFragment(val activity: MainActivity): BaseFragment(R.layout.fragment_ma
     fun tryGetStores(lat: Double, lng: Double) {
         service.getStores(lat, lng,
             { response ->
+                stores = ArrayList()
+                markers = ArrayList()
                 stores = response.result
-                for (store in stores) {
-                    val marker = Marker()
-                    marker.position = LatLng(store.lat, store.lng)
-                    marker.map = map
-                    marker.captionText = store.name
-
-                    val infoWindow = InfoWindow()
-                    infoWindow.open(marker)
+                if (!stores.isEmpty()){
+                    for (store in stores) {
+                        val marker = Marker()
+                        marker.position = LatLng(store.lat, store.lng)
+                        marker.map = map
+                        marker.captionText = store.name
+                        marker.setOnClickListener {
+                            selectedStore = store
+                            name.text = store.name
+                            address.text = store.location
+                            points.text = "${store.points}%"
+                            downloadImage(store.image, image)
+                            bottom.visibility = View.VISIBLE
+                            true
+                        }
+                        markers.add(marker)
+                    }
+                    selectedStore = stores[0]
                 }
+            },
+            { message ->
+                showToast(Constants.requestFailed)
+            })
+    }
+
+    fun tryGetStoreDetail(store: Store) {
+        service.getStoreDetail(store.idx,
+            { response ->
+                StoreInfoDialog(activity, response.result).show()
             },
             { message ->
                 showToast(Constants.requestFailed)
@@ -125,6 +161,7 @@ class MapFragment(val activity: MainActivity): BaseFragment(R.layout.fragment_ma
     override fun onResume() {
         super.onResume()
         mapView.onResume()
+        activity.toggleMenuButton(false)
     }
 
     override fun onPause() {

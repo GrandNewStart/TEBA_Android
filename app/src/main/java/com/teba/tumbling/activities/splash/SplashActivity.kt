@@ -20,7 +20,7 @@ class SplashActivity: BaseActivity(R.layout.activity_splash) {
         service.validateToken(
             { response ->
                 printLog("TOKEN VALIDATED")
-                Intent(this, MainActivity::class.java).apply {
+                Intent(this, LogInActivity::class.java).apply {
                     startActivity(this)
                     finish()
                 }

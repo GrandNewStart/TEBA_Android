@@ -7,6 +7,9 @@ import android.widget.TextView
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import com.naver.maps.geometry.LatLng
+import com.teba.tumbling.Constants
+import com.teba.tumbling.GlobalApplication.Companion.sharedPreferences
 import com.teba.tumbling.R
 import com.teba.tumbling.activities.main.adapters.PagerAdapter
 import com.teba.tumbling.activities.main.fragments.donation.DonationFragment
@@ -22,7 +25,8 @@ class MainActivity: BaseActivity(R.layout.activity_main) {
     private lateinit var mapFragment: MapFragment
     private lateinit var donationFragment: DonationFragment
     private lateinit var pageAdapter: PagerAdapter
-    private var currentTab = 0
+    var currentPos = LatLng(0.0, 0.0)
+    var canGoBack = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +41,9 @@ class MainActivity: BaseActivity(R.layout.activity_main) {
         viewPager = findViewById(R.id.viewPager)
 
         mainMenu.setOnClickListener {
-            // TODO: show drawer menu
+            if (canGoBack) {
+                donationFragment.popBack()
+            }
         }
     }
 
@@ -82,6 +88,11 @@ class MainActivity: BaseActivity(R.layout.activity_main) {
         pageAdapter = PagerAdapter(this, mapFragment, donationFragment)
         viewPager.adapter = pageAdapter
         viewPager.isUserInputEnabled = false
+    }
+
+    fun toggleMenuButton(canGoBack: Boolean) {
+        this.canGoBack = canGoBack
+        mainMenu.foreground = if (canGoBack) resources.getDrawable(R.drawable.icon_back) else resources.getDrawable(R.drawable.icon_menu)
     }
 
 }
